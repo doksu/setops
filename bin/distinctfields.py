@@ -49,7 +49,9 @@ class DistinctFieldsCommand(EventingCommand):
         for field in fieldnames:
             for element in x[field]:
                 if len(x[field][element]) == 1:
-                    workingset[x[field][element].pop()]['distinctfields'] += [field]
+                    eventnumber = x[field][element].pop()
+                    if field not in workingset[eventnumber]['distinctfields']:
+                        workingset[eventnumber]['distinctfields'] += [field]
 
         for event in workingset:
             yield event
