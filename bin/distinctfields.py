@@ -29,14 +29,14 @@ class DistinctFieldsCommand(EventingCommand):
         if len(fieldnames) < 2:
             raise Exception('Please specify at least two fields')
 
-        workingset = []
+        workingevents = []
         for event in events:
-            workingset.append(event)
+            workingevents.append(event)
 
         for field in fieldnames:
             x[field] = defaultdict(set)
 
-        for event in workingset:
+        for event in workingevents:
             for field in fieldnames:
                 try:
                     for element in event[field]:
@@ -50,10 +50,10 @@ class DistinctFieldsCommand(EventingCommand):
             for element in x[field]:
                 if len(x[field][element]) == 1:
                     eventnumber = x[field][element].pop()
-                    if field not in workingset[eventnumber]['distinctfields']:
-                        workingset[eventnumber]['distinctfields'] += [field]
+                    if field not in workingevents[eventnumber]['distinctfields']:
+                        workingevents[eventnumber]['distinctfields'] += [field]
 
-        for event in workingset:
+        for event in workingevents:
             yield event
 
 dispatch(DistinctFieldsCommand, sys.argv, sys.stdin, sys.stdout, __name__)
