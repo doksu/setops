@@ -7,7 +7,7 @@ from splunklib.searchcommands import \
 from collections import defaultdict
 
 @Configuration()
-class DistinctCommand(EventingCommand):
+class DistinctFieldsCommand(EventingCommand):
     """ %(synopsis)
 
     ##Syntax
@@ -54,4 +54,4 @@ class DistinctCommand(EventingCommand):
         for event in workingset:
             yield event
 
-dispatch(DistinctCommand, sys.argv, sys.stdin, sys.stdout, __name__)
+dispatch(DistinctFieldsCommand, sys.argv, sys.stdin, sys.stdout, __name__)
