@@ -24,6 +24,11 @@ class DistinctCommand(EventingCommand):
         x = {}
         fieldnames = self.fieldnames
 
+        # check a list of fields was provided
+        # a single field makes no sense - use stats instead
+        if len(fieldnames) < 2:
+            raise Exception('Please specify at least two fields')
+
         workingset = []
         for event in events:
             workingset.append(event)
