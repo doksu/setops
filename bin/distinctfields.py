@@ -19,6 +19,7 @@ class DistinctFieldsCommand(ReportingCommand):
     %(description)
 
     """
+    @Configuration()
     def map(self, events):
         eventnum = 0
         eventcount = 0
@@ -42,27 +43,30 @@ class DistinctFieldsCommand(ReportingCommand):
                 except KeyError:
                     pass
 	    eventnum += 1
+            yield event
 
-        distinctfields = [[] for i in range(eventcount)]
+        self.distinctfields = [[] for i in range(eventcount)]
 
         for field in x:
             for element in [field]:
-                if len(x[field][element] == 1:
+                if len(x[field][element]) == 1:
                     eventnumber = x[field][element].pop()
-                    if field not in distinctfields[eventnumber]:
-                        distinctfields[eventnumber] += [field]
+                    if field not in self.distinctfields[eventnumber]:
+                        self.distinctfields[eventnumber] += [field]
 
-        yield {self.distinctfields: distinctfields}
-
-    def reduce(self, records):
+    def reduce(self, events):
         eventnum = 0
         for event in events:
-            event['distinctfields'] = self.distinctfields[eventnum]
+            #self.logger.debug('eventnum %s', eventnum)
+            try:
+                event['distinctfields'] = self.distinctfields[eventnum]
+            except:
+                pass
             eventnum += 1
             yield event
 
     def __init__(self):
         super(DistinctFieldsCommand, self).__init__()
-        self.distinctfields = None
+        self.distinctfields = []
 
 dispatch(DistinctFieldsCommand, sys.argv, sys.stdin, sys.stdout, __name__)
