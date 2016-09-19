@@ -33,8 +33,11 @@ class DistinctCommand(EventingCommand):
 
         for event in workingset:
             for field in fieldnames:
-                for element in event[field]:
-                    x[field][element].add(eventnum)
+                try:
+                    for element in event[field]:
+                        x[field][element].add(eventnum)
+                except KeyError:
+                    pass
             event['distinctfields'] = []
 	    eventnum += 1
 
