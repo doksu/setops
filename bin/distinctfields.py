@@ -30,6 +30,12 @@ class DistinctFieldsCommand(EventingCommand):
         **Description:** Name of the field to determine unique fields by''',
         require=True, validate=validators.Fieldname())
 
+    max_mem = Option(
+        doc='''
+        **Syntax:** **max_mem=***<integer>*
+        **Description:** The maximum amount of memory to use''',
+        require=False, validate=validators.Integer(minimum=0))
+
     def transform(self, events):
         fieldnames = self.fieldnames
 
@@ -38,7 +44,13 @@ class DistinctFieldsCommand(EventingCommand):
         if len(fieldnames) < 2:
             raise Exception('Please specify at least two fields')
 
-        workingfile = tempfile.TemporaryFile()
+	try:
+	    if self.max_mem:
+                max_mem = self.max_mem
+        except:
+            max_mem = 0
+
+        workingfile = tempfile.SpooledTemporaryFile(max_size=max_mem)
 
         by_values = set()
 
