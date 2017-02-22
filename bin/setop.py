@@ -20,7 +20,7 @@ class SetOpCommand(StreamingCommand):
     """
     op = Option(
         doc='''
-        **Syntax:** **op=***<cardinality|relation|union|intersection|diff|sym_diff|>*
+        **Syntax:** **op=***<cardinality|relation|union|intersection|difference|symmetric_difference|>*
         **Description:** ''',
         require=True)
 
@@ -38,9 +38,9 @@ class SetOpCommand(StreamingCommand):
                 elif set(record[self.fieldnames[0]]).issuperset(set(record[self.fieldnames[1]])):
                     relation = "superset"
                 elif len(set(record[self.fieldnames[0]]).intersection(set(record[self.fieldnames[1]]))) > 0:
-                    relation = "partially disparate"
+                    relation = "partially disjoint"
                 else:
-                    relation = "fully disparate"
+                    relation = "fully disjoint"
                 record["relation"] = relation
                 yield record
         elif self.op == 'union':
@@ -51,11 +51,11 @@ class SetOpCommand(StreamingCommand):
             for record in records:
                 record['intersection'] = list(set(record[self.fieldnames[0]]).intersection(set(record[self.fieldnames[1]])))
                 yield record
-        elif self.op == 'diff':
+        elif self.op == 'difference':
             for record in records:
-                record['diff'] = list(set(record[self.fieldnames[0]]).difference(set(record[self.fieldnames[1]])))
+                record['difference'] = list(set(record[self.fieldnames[0]]).difference(set(record[self.fieldnames[1]])))
                 yield record
-        elif self.op == 'sym_diff':
+        elif self.op == 'symmetric_difference':
             for record in records:
                 record['sym_diff'] = list(set(record[self.fieldnames[0]]).symmetric_difference(set(record[self.fieldnames[1]])))
                 yield record
