@@ -35,7 +35,6 @@ class DistinctFieldsCommand(EventingCommand):
 
         event_cache = []
         tuple_counter = {}
-	eventcount = 0
 
         for event in events:
             event_cache.append(event)
