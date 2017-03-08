@@ -25,6 +25,8 @@ class SetOpCommand(StreamingCommand):
         require=True)
 
     def stream(self, records):
+        if len(self.fieldnames) != 2:
+            raise Exception("Two field names must be provided.")
         if self.op == 'cardinality':
             for record in records:
                 record['cardinality'] = len(set(record[self.fieldnames[0]]))
