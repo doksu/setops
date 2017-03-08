@@ -5,10 +5,7 @@ import json
 from splunklib.searchcommands import \
     dispatch, EventingCommand, Configuration, Option, validators
 
-from collections import defaultdict
-from collections import OrderedDict
-import tempfile
-import csv
+from collections import defaultdict, OrderedDict
 
 @Configuration()
 class DistinctFieldsCommand(EventingCommand):
@@ -23,57 +20,41 @@ class DistinctFieldsCommand(EventingCommand):
     %(description)
 
     """
-    def transform(self, events):
-        fieldnames = self.fieldnames
 
-        # check a list of fields was provided
+    by = Option(
+        doc='''
+        **Syntax:** **by=***<fieldname>*
+        **Description:** Name of the field to determine unique fields by''',
+        require=True, validate=validators.Fieldname())
+
+    def transform(self, events):
+
         # a single field makes no sense - use stats instead
-        if len(fieldnames) < 2:
+        if len(self.fieldnames) < 2:
             raise Exception('Please specify at least two fields')
 
-        workingfile = tempfile.TemporaryFile()
-
+        event_cache = []
+        tuple_counter = {}
 	eventcount = 0
+
         for event in events:
-	    eventcount += 1
-	    # create list from ordered dict then write to temp file as json string
-            workingfile.write(json.dumps(list(event.viewitems()))+'\n')
+            event_cache.append(event)
+            for by_field in event[self.by]:
+                for field in self.fieldnames:
+                    for field_value in event[field]:
+                        if (by_field, field, field_value) in tuple_counter:
+                            tuple_counter[(by_field, field, field_value)] += 1
+                        else:
+                            tuple_counter[(by_field, field, field_value)] = 1
 
-	# initialise data structure
-	distinctfields = [[] for x in xrange(eventcount)]
-
-        x = {}
-        for field in fieldnames:
-            x[field] = defaultdict(set)
-
-        eventnum = 0
-	workingfile.seek(0)
-        for line in workingfile:
-	    event = OrderedDict(json.loads(line))
-            for field in fieldnames:
-                try:
-                	for element in event[field]:
-                        	# don't bother adding more than two event numbers
-                        	if len(x[field][element]) < 2:
-                            		x[field][element].add(eventnum)
-                except KeyError:
-			# there was no value for that field in this event
-                	pass
-	    eventnum += 1
-
-        for field in fieldnames:
-            for element in x[field]:
-                if len(x[field][element]) == 1:
-                    eventnumber = x[field][element].pop()
-                    if field not in distinctfields[eventnumber]:
-                       distinctfields[eventnumber] += [field]
-
-        workingfile.seek(0)
-        counter = 0
-        for line in workingfile:
-		event = OrderedDict(json.loads(line))
-        	event['distinctfields'] = distinctfields[counter]
-        	yield event
-        	counter += 1
+        for event in event_cache:
+            event['distinct_fields'] = set()
+            for by_field in event[self.by]:
+                for field in self.fieldnames:
+                    for field_value in event[field]:
+                        if tuple_counter[(by_field, field, field_value)] == 1:
+                            event['distinct_fields'].add(field)
+            event['distinct_fields'] = list(event['distinct_fields'])
+            yield event
 
 dispatch(DistinctFieldsCommand, sys.argv, sys.stdin, sys.stdout, __name__)
