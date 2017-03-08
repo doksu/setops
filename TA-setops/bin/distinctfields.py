@@ -49,14 +49,14 @@ class DistinctFieldsCommand(EventingCommand):
                                 tuple_counter[(by_field, field, field_value)] = 1
 
         for event in event_cache:
-            event['distinct_fields'] = set()
+            event['distinctfields'] = set()
             for by_field in event[self.by]:
                 for field in self.fieldnames:
                     if field in event:
                         for field_value in event[field]:
                             if tuple_counter[(by_field, field, field_value)] == 1:
-                                event['distinct_fields'].add(field)
-            event['distinct_fields'] = list(event['distinct_fields'])
+                                event['distinctfields'].add(field)
+            event['distinctfields'] = list(event['distinctfields'])
             yield event
 
 dispatch(DistinctFieldsCommand, sys.argv, sys.stdin, sys.stdout, __name__)
