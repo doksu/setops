@@ -25,29 +25,47 @@ class DistinctFieldsCommand(EventingCommand):
         doc='''
         **Syntax:** **by=***<fieldname>*
         **Description:** Name of the field to determine unique fields by''',
-        require=True, validate=validators.Fieldname())
+        require=False, validate=validators.Fieldname())
 
+    # produces dictionary with tuple of relevant fields as key and count as value
+    # then adds 'distinctfields' to events where tuple match has a value of 1
     def transform(self, events):
 
         # a single field makes no sense - use stats instead
         if len(self.fieldnames) < 2:
             raise Exception('Please specify at least two fields')
 
+        # use a fake 'by' field if none was specified
+        if not self.by:
+            self.by = "_distinctfields"
+
         event_cache = []
         tuple_counter = {}
-	eventcount = 0
 
+        # first pass: cache events and produce tuple counter
         for event in events:
-            event_cache.append(event)
+
+            # prepare the 'by' field
+            if self.by == "_distinctfields":
+                event["_distinctfields"] = [1]
+            elif not isinstance(event[self.by], (list, tuple)):
+                event[self.by] = [event[self.by]]
+
+            # produce the tuple counter
             for by_field in event[self.by]:
                 for field in self.fieldnames:
                     if field in event:
+                        if not isinstance(event[field], (list, tuple)):
+                            event[field] = [event[field]]
                         for field_value in event[field]:
                             if (by_field, field, field_value) in tuple_counter:
                                 tuple_counter[(by_field, field, field_value)] += 1
                             else:
                                 tuple_counter[(by_field, field, field_value)] = 1
 
+            event_cache.append(event)
+
+        # second pass: process the distinct fields using tuple counter
         for event in event_cache:
             event['distinctfields'] = set()
             for by_field in event[self.by]:
@@ -56,7 +74,12 @@ class DistinctFieldsCommand(EventingCommand):
                         for field_value in event[field]:
                             if tuple_counter[(by_field, field, field_value)] == 1:
                                 event['distinctfields'].add(field)
+
+            # clean up
             event['distinctfields'] = list(event['distinctfields'])
+            if self.by == "_distinctfields":
+                del event['_distinctfields']
+
             yield event
 
 dispatch(DistinctFieldsCommand, sys.argv, sys.stdin, sys.stdout, __name__)
