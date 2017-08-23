@@ -46,7 +46,7 @@ try:
 except ImportError, e:
     from xml.parsers.expat import ExpatError as ParseError
 
-from data import record
+from .data import record
 
 __all__ = [
     "AuthenticationError",
@@ -1343,7 +1343,7 @@ def handler(key_file=None, cert_file=None, timeout=None):
         head = {
             "Content-Length": str(len(body)),
             "Host": host,
-            "User-Agent": "splunk-sdk-python/1.6.0",
+            "User-Agent": "splunk-sdk-python/1.6.2",
             "Accept": "*/*",
             "Connection": "Close",
         } # defaults
